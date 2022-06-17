@@ -22,10 +22,6 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build -i
       working-directory: ./yadif
-
-    - name: Run integration tests
-      run: ./gradlew integTest -i
-      working-directory: ./yadif
     - name: Generate coverage report
       run: ./gradlew codeCoverageReport
       working-directory: ./yadif
