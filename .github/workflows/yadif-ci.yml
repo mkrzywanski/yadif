@@ -1,8 +1,5 @@
 name: rsocket-yadif-ci
-on: 
-  push:
-    paths:
-      - 'yadif/**'
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
