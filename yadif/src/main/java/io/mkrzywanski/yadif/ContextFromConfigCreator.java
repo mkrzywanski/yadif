@@ -6,10 +6,16 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 class ContextFromConfigCreator {
+
+    private final TopologicalSort<Class<?>> topologicalSort = new KhanTopologicalSort();
 
     Context fromConfig(final Class<?> clazz) {
         try {
@@ -17,31 +23,49 @@ class ContextFromConfigCreator {
             final Object o = constructor.newInstance();
             return fromConfig(o);
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
+            throw new YadifException(e);
         }
     }
 
     Context fromConfig(final Object object) {
         Objects.requireNonNull(object);
-        final var methods = object.getClass()
-                .getMethods();
-        final var context = new Context();
+        final var factoryMethods = getFactoryMethods(object);
 
-        Arrays.stream(methods)
-                .filter(method -> method.isAnnotationPresent(Instance.class))
-                .map(getBean(object))
-                .forEach(instance -> context.add(instance.getClass().getTypeName(), instance));
+        final Map<Class<?>, List<Class<?>>> classToDependencies = factoryMethods.stream().collect(Collectors.toMap(Method::getReturnType, method -> Arrays.asList(method.getParameterTypes())));
+        final var orderedDependencies = topologicalSort.sort(classToDependencies);
 
-        return context;
+        final var beanToFactoryMethod = factoryMethods.stream().collect(Collectors.toMap(Method::getReturnType, Function.identity()));
+        final Map<Class<?>, Object> initializedBeans = new HashMap<>();
+
+        for (Class<?> beanType : orderedDependencies) {
+            final Method initializingMethod = beanToFactoryMethod.get(beanType);
+            final int parameterCount = initializingMethod.getParameterCount();
+            final Object[] args = new Object[parameterCount];
+            for (int i = 0; i < parameterCount; i++) {
+                args[i] = initializedBeans.get(initializingMethod.getParameterTypes()[i]);
+            }
+            try {
+                final Object constructedBean = initializingMethod.invoke(object, args);
+                initializedBeans.put(beanType, constructedBean);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new YadifException(e);
+            }
+        }
+
+        return createContext(initializedBeans);
     }
 
-    private Function<Method, Object> getBean(final Object object) {
-        return method -> {
-            try {
-                return method.invoke(object);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new IllegalStateException(e);
-            }
-        };
+    private List<Method> getFactoryMethods(final Object object) {
+        final var methods = object.getClass()
+                .getMethods();
+        return Arrays.stream(methods)
+                .filter(method -> method.isAnnotationPresent(Instance.class))
+                .toList();
+    }
+
+    private Context createContext(final Map<Class<?>, Object> initializedBeans) {
+        final var context = new Context();
+        initializedBeans.forEach((key, value) -> context.add(key.getTypeName(), value));
+        return context;
     }
 }
