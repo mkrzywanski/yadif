@@ -22,19 +22,19 @@ class Graph {
                 .collect(Collectors.toSet());
     }
 
-    List<? extends Class<?>> getNodeDependents(final Class<?> node) {
+    Set<Class<?>> getNodeDependents(final Class<?> node) {
         return graph.entrySet()
                 .stream()
                 .filter(classListEntry -> classListEntry.getValue().contains(node))
-                .map(classListEntry -> (Class<?>) classListEntry.getKey())
-                .toList();
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
     }
 
     void removeEdge(final Class<?> from, final Class<?> toRemove) {
         graph.computeIfPresent(from, (clazz, classes) -> {
-            final var classes1 = new ArrayList<>(classes);
-            classes1.remove(toRemove);
-            return classes1;
+            final var copy = new ArrayList<>(classes);
+            copy.remove(toRemove);
+            return copy;
         });
     }
 

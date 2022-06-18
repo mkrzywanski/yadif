@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-class ContextFromConfigCreator {
+class FromConfigContextFactory {
 
     private final TopologicalSort<Class<?>> topologicalSort = new KhanTopologicalSort();
 
