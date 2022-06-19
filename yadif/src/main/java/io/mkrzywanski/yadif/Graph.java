@@ -8,22 +8,36 @@ import java.util.stream.Collectors;
 
 class Graph {
 
-    private final Map<Class<?>, List<Class<?>>> graph;
+    private final Map<Class<?>, List<Class<?>>> adjacencyMap;
 
-    Graph(final Map<Class<?>, List<Class<?>>> graph) {
-        this.graph = graph;
+    Graph(final Map<Class<?>, List<Class<?>>> adjacencyMap) {
+        this.adjacencyMap = adjacencyMap;
+    }
+
+    Graph copy() {
+        final Map<Class<?>, List<Class<?>>> adjacencyMatrixCopy = adjacencyMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, classListEntry -> new ArrayList<>(classListEntry.getValue())));
+        return new Graph(adjacencyMatrixCopy);
     }
 
     Set<Class<?>> getLeafs() {
-        return graph
+        return adjacencyMap
                 .entrySet()
                 .stream()
                 .filter(listEntry -> listEntry.getValue().isEmpty()).map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
     }
 
+    Set<Class<?>> getRootCandidates() {
+        return adjacencyMap.entrySet().stream()
+                .filter(classListEntry -> !classListEntry.getValue().isEmpty())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+
     Set<Class<?>> getNodeDependents(final Class<?> node) {
-        return graph.entrySet()
+        return adjacencyMap.entrySet()
                 .stream()
                 .filter(classListEntry -> classListEntry.getValue().contains(node))
                 .map(Map.Entry::getKey)
@@ -31,7 +45,7 @@ class Graph {
     }
 
     void removeEdge(final Class<?> from, final Class<?> toRemove) {
-        graph.computeIfPresent(from, (clazz, classes) -> {
+        adjacencyMap.computeIfPresent(from, (clazz, classes) -> {
             final var copy = new ArrayList<>(classes);
             copy.remove(toRemove);
             return copy;
@@ -39,6 +53,10 @@ class Graph {
     }
 
     boolean hasDependencies(final Class<?> node) {
-        return !graph.get(node).isEmpty();
+        return !adjacencyMap.get(node).isEmpty();
+    }
+
+    List<Class<?>> getAdjacentNodes(final Class<?> vertex) {
+        return adjacencyMap.getOrDefault(vertex, List.of());
     }
 }

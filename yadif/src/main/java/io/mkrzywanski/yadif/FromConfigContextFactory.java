@@ -10,12 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class FromConfigContextFactory {
 
-    private final TopologicalSort<Class<?>> topologicalSort = new KhanTopologicalSort();
+    private final TopologicalSort<Class<?>> topologicalSort = new KahnTopologicalSort();
+    private final DfsGraphCycleDetecting cycleDetecting = new DfsGraphCycleDetecting();
 
     Context fromConfig(final Class<?> clazz) {
         try {
@@ -31,8 +33,13 @@ class FromConfigContextFactory {
         Objects.requireNonNull(object);
         final var factoryMethods = getFactoryMethods(object);
 
-        final Map<Class<?>, List<Class<?>>> classToDependencies = factoryMethods.stream().collect(Collectors.toMap(Method::getReturnType, method -> Arrays.asList(method.getParameterTypes())));
-        final var orderedDependencies = topologicalSort.sort(classToDependencies);
+        final Map<Class<?>, List<Class<?>>> adjacencyMatrix = factoryMethods.stream()
+                .collect(Collectors.toMap(Method::getReturnType, method -> Arrays.asList(method.getParameterTypes())));
+        final Graph graph = new Graph(adjacencyMatrix);
+
+        detectCycles(graph);
+
+        final var orderedDependencies = topologicalSort.sort(graph);
 
         final var beanToFactoryMethod = factoryMethods.stream().collect(Collectors.toMap(Method::getReturnType, Function.identity()));
         final Map<Class<?>, Object> initializedBeans = new HashMap<>();
@@ -53,6 +60,14 @@ class FromConfigContextFactory {
         }
 
         return createContext(initializedBeans);
+    }
+
+    private void detectCycles(final Graph graph) {
+        final Set<Path> cycles = cycleDetecting.detectCycles(graph);
+
+        if (!cycles.isEmpty()) {
+            throw new DependencyCycleDetectedException(cycles);
+        }
     }
 
     private List<Method> getFactoryMethods(final Object object) {
