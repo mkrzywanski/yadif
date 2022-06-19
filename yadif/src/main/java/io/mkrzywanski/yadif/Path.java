@@ -36,6 +36,10 @@ class Path {
                 .anyMatch(classLongEntry -> classLongEntry.getValue() > 1);
     }
 
+    List<Class<?>> getPath() {
+        return new ArrayList<>(path);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
