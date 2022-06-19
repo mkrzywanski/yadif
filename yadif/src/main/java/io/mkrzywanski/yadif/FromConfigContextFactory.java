@@ -1,6 +1,8 @@
 package io.mkrzywanski.yadif;
 
 import io.mkrzywanski.yadif.annotation.Instance;
+import io.mkrzywanski.yadif.api.CyclePath;
+import io.mkrzywanski.yadif.api.YadifException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -66,7 +68,10 @@ class FromConfigContextFactory {
         final Set<Path> cycles = cycleDetecting.detectCycles(graph);
 
         if (!cycles.isEmpty()) {
-            throw new DependencyCycleDetectedException(cycles);
+            final Set<CyclePath> cyclePaths = cycles.stream()
+                    .map(path -> new CyclePath(path.getPath()))
+                    .collect(Collectors.toSet());
+            throw new DependencyCycleDetectedException(cyclePaths);
         }
     }
 

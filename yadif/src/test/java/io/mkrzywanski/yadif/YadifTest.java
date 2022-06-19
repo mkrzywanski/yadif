@@ -1,10 +1,12 @@
 package io.mkrzywanski.yadif;
 
+import io.mkrzywanski.yadif.api.CyclePath;
 import io.mkrzywanski.yadif.test.A;
 import io.mkrzywanski.yadif.test.B;
 import io.mkrzywanski.yadif.test.C;
 import io.mkrzywanski.yadif.test.ConfigWithDependencies;
 import io.mkrzywanski.yadif.test.CycleConfig1;
+import io.mkrzywanski.yadif.test.CycleConfig2;
 import io.mkrzywanski.yadif.test.DummyConfig;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.ThrowableAssert;
@@ -55,9 +57,20 @@ class YadifTest {
                 .containsExactlyInAnyOrder(path(List.of(A.class, B.class, A.class)), path(List.of(B.class, A.class, B.class)));
     }
 
-    private Path path(final List<Class<?>> paths) {
-        final Path path = new Path();
-        paths.forEach(path::add);
-        return path;
+    @Test
+    void shouldThrowExceptionWhenCycleIsDetected2() {
+        final ThrowableAssert.ThrowingCallable code = () -> Yadif.fromConfig(CycleConfig2.class);
+
+        assertThatCode(code)
+                .isExactlyInstanceOf(DependencyCycleDetectedException.class)
+                .extracting("cycles", InstanceOfAssertFactories.ITERABLE)
+                .containsExactlyInAnyOrder(
+                        path(List.of(A.class, B.class, C.class, A.class)),
+                        path(List.of(B.class, C.class, A.class, B.class)),
+                        path(List.of(C.class, A.class, B.class, C.class)));
+    }
+
+    private CyclePath path(final List<Class<?>> paths) {
+        return new CyclePath(paths);
     }
 }
