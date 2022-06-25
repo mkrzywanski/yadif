@@ -8,6 +8,7 @@ import io.mkrzywanski.yadif.test.ConfigWithDependencies;
 import io.mkrzywanski.yadif.test.CycleConfig1;
 import io.mkrzywanski.yadif.test.CycleConfig2;
 import io.mkrzywanski.yadif.test.DummyConfig;
+import io.mkrzywanski.yadif.test.packagescan.Config;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Test;
@@ -68,6 +69,17 @@ class YadifTest {
                         path(List.of(A.class, B.class, C.class, A.class)),
                         path(List.of(B.class, C.class, A.class, B.class)),
                         path(List.of(C.class, A.class, B.class, C.class)));
+    }
+
+    @Test
+    void shouldInstantiateSimplePackagedScannedBeans() {
+        final Context context = Yadif.fromConfig(Config.class);
+        final var a = context.getInstance("io.mkrzywanski.yadif.test.packagescan.components.A", io.mkrzywanski.yadif.test.packagescan.components.A.class);
+        final var b = context.getInstance("io.mkrzywanski.yadif.test.packagescan.components.B", io.mkrzywanski.yadif.test.packagescan.components.B.class);
+
+        assertThat(a).isPresent();
+        assertThat(b).isPresent();
+
     }
 
     private CyclePath path(final List<Class<?>> paths) {
