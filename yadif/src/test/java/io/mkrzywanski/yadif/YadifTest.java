@@ -114,6 +114,15 @@ class YadifTest {
 
     }
 
+
+    @Test
+    void shouldThrowExceptionWhenBeanRequiresDependencyThatDoesNotExistInContext() {
+        final ThrowableAssert.ThrowingCallable code = () -> Yadif.fromConfig(io.mkrzywanski.yadif.test.packagescan.nobeancreated.Config.class);
+
+        assertThatCode(code).isExactlyInstanceOf(YadifBeanInsantiationException.class);
+
+    }
+
     private CyclePath path(final List<Class<?>> paths) {
         return new CyclePath(paths);
     }

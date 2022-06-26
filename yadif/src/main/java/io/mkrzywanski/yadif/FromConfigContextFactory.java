@@ -2,6 +2,7 @@ package io.mkrzywanski.yadif;
 
 import io.mkrzywanski.yadif.api.CyclePath;
 import io.mkrzywanski.yadif.api.DependencyCycleDetectedException;
+import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
 import io.mkrzywanski.yadif.api.YadifException;
 
 import java.lang.reflect.Constructor;
@@ -36,20 +37,31 @@ class FromConfigContextFactory {
 
     Context fromConfig(final Object object) {
         Objects.requireNonNull(object);
-        final BeanIntrospectionStrategies beanCreationStrategies = introspectConfiguration(object);
+        final BeanIntrospectionResult beanIntrospectionResult = introspectConfiguration(object);
 
-        final Graph dependencyGraph = new Graph(beanCreationStrategies.adjacency());
+        final Graph dependencyGraph = new Graph(beanIntrospectionResult.adjacency());
 
         detectCycles(dependencyGraph);
+        ensureAllNodesCanBeCreated(dependencyGraph);
 
         final var orderedDependencies = topologicalSort.sort(dependencyGraph);
 
-        final Map<Class<?>, Object> initializedBeans = initializeBeans(beanCreationStrategies, orderedDependencies);
+        final Map<Class<?>, Object> initializedBeans = initializeBeans(beanIntrospectionResult, orderedDependencies);
 
         return createContext(initializedBeans);
     }
 
-    private BeanIntrospectionStrategies introspectConfiguration(final Object object) {
+    private void ensureAllNodesCanBeCreated(final Graph dependencyGraph) {
+        final Set<Class<?>> nodes = dependencyGraph.nodes();
+        for (Class<?> node : nodes) {
+            final var adjacentNodes = dependencyGraph.getAdjacentNodes(node);
+            if (!nodes.containsAll(adjacentNodes)) {
+                throw new YadifBeanInsantiationException("Not all required dependencies found when creating context");
+            }
+        }
+    }
+
+    private BeanIntrospectionResult introspectConfiguration(final Object object) {
 
         final var introspectionStrategies = strategies.stream()
                 .map(beanIntrospectionStrategy -> beanIntrospectionStrategy.introspect(object))
@@ -58,10 +70,10 @@ class FromConfigContextFactory {
         assert !introspectionStrategies.isEmpty();
 
         return introspectionStrategies.stream()
-                .reduce(BeanIntrospectionStrategies.empty(), BeanIntrospectionStrategies::merge);
+                .reduce(BeanIntrospectionResult.empty(), BeanIntrospectionResult::merge);
     }
 
-    private Map<Class<?>, Object> initializeBeans(final BeanIntrospectionStrategies strategies, final List<Class<?>> orderedDependencies) {
+    private Map<Class<?>, Object> initializeBeans(final BeanIntrospectionResult strategies, final List<Class<?>> orderedDependencies) {
         final Map<Class<?>, Object> initializedBeans = new HashMap<>();
 
         for (Class<?> beanType : orderedDependencies) {
