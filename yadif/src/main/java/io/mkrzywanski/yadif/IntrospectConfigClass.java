@@ -5,7 +5,6 @@ import io.mkrzywanski.yadif.annotation.Instance;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 class IntrospectConfigClass implements BeanIntrospectionStrategy {
@@ -13,9 +12,6 @@ class IntrospectConfigClass implements BeanIntrospectionStrategy {
     @Override
     public BeanIntrospectionStrategies introspect(final Object object) {
         final var factoryMethods = getFactoryMethods(object);
-
-        final Map<Class<?>, List<Class<?>>> adjacencyMatrix = factoryMethods.stream()
-                .collect(Collectors.toMap(Method::getReturnType, method -> Arrays.asList(method.getParameterTypes())));
 
         final var strategyMap = factoryMethods
                 .stream()

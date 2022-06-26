@@ -10,12 +10,12 @@ class BeanIntrospectionStrategies {
 
     private final Map<Class<?>, BeanCreationStrategy> strategyMap;
 
-    BeanIntrospectionStrategies() {
-        this.strategyMap = new HashMap<>();
-    }
-
     BeanIntrospectionStrategies(final Map<Class<?>, BeanCreationStrategy> initial) {
         this.strategyMap = initial;
+    }
+
+    static BeanIntrospectionStrategies empty() {
+        return new BeanIntrospectionStrategies(new HashMap<>());
     }
 
     BeanCreationStrategy get(final Class<?> clazz) {

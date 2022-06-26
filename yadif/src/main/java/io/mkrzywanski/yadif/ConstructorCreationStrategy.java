@@ -9,6 +9,7 @@ class ConstructorCreationStrategy implements BeanCreationStrategy {
 
     ConstructorCreationStrategy(final Constructor<?> constructor) {
         this.constructor = constructor;
+        this.constructor.setAccessible(true);
     }
 
     @Override
@@ -24,7 +25,6 @@ class ConstructorCreationStrategy implements BeanCreationStrategy {
     @Override
     public Object invoke(final Object[] args)  {
         try {
-            constructor.setAccessible(true);
             return constructor.newInstance(args);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new YadifBeanInsantiationException(e);

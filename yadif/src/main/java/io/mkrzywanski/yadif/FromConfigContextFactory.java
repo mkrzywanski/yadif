@@ -1,12 +1,10 @@
 package io.mkrzywanski.yadif;
 
-import io.mkrzywanski.yadif.annotation.Instance;
 import io.mkrzywanski.yadif.api.CyclePath;
 import io.mkrzywanski.yadif.api.YadifException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -52,24 +50,21 @@ class FromConfigContextFactory {
 
     private BeanIntrospectionStrategies introspectConfiguration(final Object object) {
 
-        final var collect = strategies.stream()
+        final var introspectionStrategies = strategies.stream()
                 .map(beanIntrospectionStrategy -> beanIntrospectionStrategy.introspect(object))
                 .toList();
 
-        assert collect.size() > 0;
-        BeanIntrospectionStrategies first = collect.get(0);
-        for (int i = 1; i < collect.size(); i++) {
-            first = first.merge(collect.get(i));
-        }
+        assert !introspectionStrategies.isEmpty();
 
-        return first;
+        return introspectionStrategies.stream()
+                .reduce(BeanIntrospectionStrategies.empty(), BeanIntrospectionStrategies::merge);
     }
 
-    private Map<Class<?>, Object> initializeBeans(final BeanIntrospectionStrategies a, final List<Class<?>> orderedDependencies) {
+    private Map<Class<?>, Object> initializeBeans(final BeanIntrospectionStrategies strategies, final List<Class<?>> orderedDependencies) {
         final Map<Class<?>, Object> initializedBeans = new HashMap<>();
 
         for (Class<?> beanType : orderedDependencies) {
-            final BeanCreationStrategy initializingMethod = a.get(beanType);
+            final BeanCreationStrategy initializingMethod = strategies.get(beanType);
             final int parameterCount = initializingMethod.getParameterCount();
             final Object[] args = new Object[parameterCount];
             for (int i = 0; i < parameterCount; i++) {
@@ -90,14 +85,6 @@ class FromConfigContextFactory {
                     .collect(Collectors.toSet());
             throw new DependencyCycleDetectedException(cyclePaths);
         }
-    }
-
-    private List<Method> getFactoryMethods(final Object object) {
-        final var methods = object.getClass()
-                .getMethods();
-        return Arrays.stream(methods)
-                .filter(method -> method.isAnnotationPresent(Instance.class))
-                .toList();
     }
 
     private Context createContext(final Map<Class<?>, Object> initializedBeans) {

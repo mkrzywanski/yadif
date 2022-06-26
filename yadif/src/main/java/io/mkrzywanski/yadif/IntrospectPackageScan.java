@@ -19,27 +19,35 @@ class IntrospectPackageScan implements BeanIntrospectionStrategy {
 
     @Override
     public BeanIntrospectionStrategies introspect(final Object object) {
-        final HashMap<Class<?>, BeanCreationStrategy> result = new HashMap<>();
         final PackageScan annotation = object.getClass().getAnnotation(PackageScan.class);
-        if (annotation != null) {
-            final String packageName = annotation.value();
-            if (packageName == null || packageName.isEmpty()) {
-                throw new YadifException("Package scan value is null");
-            }
-            final Reflections reflections = new Reflections(packageName);
 
-            final Set<Class<?>> potentialBeans =
-                    reflections.get(SubTypes.of(TypesAnnotated.with(Component.class)).asClass());
-
-            for (Class<?> clazz : potentialBeans) {
-                final Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
-                final Constructor<?> constructor = isMoreThanOneConstructor(declaredConstructors) ?
-                        getAnnotatedConstructor(declaredConstructors) :
-                        declaredConstructors[0];
-
-                result.put(clazz, new ConstructorCreationStrategy(constructor));
-            }
+        if (annotation == null) {
+            return BeanIntrospectionStrategies.empty();
         }
+
+        final String packageName = annotation.value();
+        if (packageName == null || packageName.isEmpty()) {
+            throw new YadifException("Package scan value is null");
+        }
+        final Reflections reflections = new Reflections(packageName);
+
+        final Set<Class<?>> potentialBeans =
+                reflections.get(SubTypes.of(TypesAnnotated.with(Component.class)).asClass());
+
+        return createBeanCreationStrategies(potentialBeans);
+    }
+
+    private BeanIntrospectionStrategies createBeanCreationStrategies(final Set<Class<?>> potentialBeans) {
+        final HashMap<Class<?>, BeanCreationStrategy> result = new HashMap<>();
+        for (Class<?> clazz : potentialBeans) {
+            final Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
+            final Constructor<?> constructor = isMoreThanOneConstructor(declaredConstructors) ?
+                    getAnnotatedConstructor(declaredConstructors) :
+                    declaredConstructors[0];
+
+            result.put(clazz, new ConstructorCreationStrategy(constructor));
+        }
+
         return new BeanIntrospectionStrategies(result);
     }
 
