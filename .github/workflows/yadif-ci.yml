@@ -1,4 +1,4 @@
-name: rsocket-yadif-ci
+name: yadif-ci
 on: [push]
 jobs:
   build:
