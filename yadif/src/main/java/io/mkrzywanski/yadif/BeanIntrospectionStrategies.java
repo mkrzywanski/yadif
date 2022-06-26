@@ -22,10 +22,6 @@ class BeanIntrospectionStrategies {
         return strategyMap.get(clazz);
     }
 
-    static BeanIntrospectionStrategies withInitial(final Map<Class<?>, BeanCreationStrategy> initial) {
-        return new BeanIntrospectionStrategies(initial);
-    }
-
     Map<Class<?>, List<Class<?>>> adjacency() {
         return strategyMap.entrySet()
                 .stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Arrays.asList(e.getValue().getParameterTypes())));
