@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.reflections.scanners.Scanners.SubTypes;
@@ -39,14 +40,14 @@ class IntrospectPackageScan implements BeanIntrospectionStrategy {
     }
 
     private BeanIntrospectionResult createBeanCreationStrategies(final Set<Class<?>> potentialBeans) {
-        final HashMap<Class<?>, BeanCreationStrategy> result = new HashMap<>();
+        final Map<Bean, BeanCreationStrategy> result = new HashMap<>();
         for (Class<?> clazz : potentialBeans) {
             final Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
             final Constructor<?> constructor = isMoreThanOneConstructor(declaredConstructors) ?
                     getAnnotatedConstructor(declaredConstructors) :
                     declaredConstructors[0];
 
-            result.put(clazz, new ConstructorCreationStrategy(constructor));
+            result.put(new Bean(clazz, new BeanId(clazz.getName().toLowerCase())), new ConstructorCreationStrategy(constructor));
         }
 
         return new BeanIntrospectionResult(result);

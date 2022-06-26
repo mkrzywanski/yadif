@@ -1,9 +1,13 @@
 package io.mkrzywanski.yadif;
 
+import io.mkrzywanski.yadif.annotation.Qualifier;
 import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 class ConstructorCreationStrategy implements BeanCreationStrategy {
 
@@ -14,14 +18,25 @@ class ConstructorCreationStrategy implements BeanCreationStrategy {
         this.constructor.setAccessible(true);
     }
 
+//    @Override
+//    public int getParameterCount() {
+//        return constructor.getParameterCount();
+//    }
+
     @Override
-    public int getParameterCount() {
-        return constructor.getParameterCount();
+    public List<Class<?>> getParameterTypes() {
+        return Arrays.stream(constructor.getParameterTypes()).toList();
     }
 
     @Override
-    public Class<?>[] getParameterTypes() {
-        return constructor.getParameterTypes();
+    public List<Bean> dependencies() {
+        return Arrays.stream(constructor.getAnnotatedParameterTypes()).map(annotatedType -> {
+            final Qualifier annotation = annotatedType.getAnnotation(Qualifier.class);
+            final BeanId beanId = Optional.ofNullable(annotation).map(Qualifier::value)
+                    .map(BeanId::new)
+                    .orElseGet(BeanId::empty);
+            return new Bean((Class<?>) annotatedType.getType(), beanId);
+        }).toList();
     }
 
     @Override

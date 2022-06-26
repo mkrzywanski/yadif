@@ -3,11 +3,10 @@ package io.mkrzywanski.yadif;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 class Path {
 
-    private List<Class<?>> path;
+    private List<Bean> path;
 
     Path() {
         this.path = new ArrayList<>();
@@ -19,24 +18,36 @@ class Path {
         return path;
     }
 
-    static Path withInitial(final Class<?> clazz) {
+    static Path withInitial(final Bean clazz) {
         final Path path = new Path();
         path.add(clazz);
         return path;
     }
 
-    void add(final Class<?> clz) {
+    void add(final Bean clz) {
         path.add(clz);
     }
 
     boolean isCycle() {
-        return path.stream()
-                .collect(Collectors.groupingBy(clazz -> clazz, Collectors.counting()))
-                .entrySet().stream()
-                .anyMatch(classLongEntry -> classLongEntry.getValue() > 1);
+//        boolean b = path.stream()
+//                .collect(Collectors.groupingBy(clazz -> clazz, Collectors.counting()))
+//                .entrySet().stream()
+//                .anyMatch(classLongEntry -> classLongEntry.getValue() > 1);
+//        if (b) {
+//            return b;
+//        }
+        final Bean first = path.get(0);
+        final Bean last = path.get(path.size() - 1);
+
+        if (first.hasSameTypeAs(last)) {
+            return !first.hasNonEmptyId() || !last.hasNonEmptyId() || first.hasSameIdAs(last);
+        } else {
+            return false;
+        }
+
     }
 
-    List<Class<?>> getPath() {
+    List<Bean> getPath() {
         return new ArrayList<>(path);
     }
 

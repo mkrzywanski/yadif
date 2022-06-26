@@ -1,6 +1,5 @@
 package io.mkrzywanski.yadif;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,9 +7,9 @@ import java.util.stream.Collectors;
 
 class BeanIntrospectionResult {
 
-    private final Map<Class<?>, BeanCreationStrategy> strategyMap;
+    private final Map<Bean, BeanCreationStrategy> strategyMap;
 
-    BeanIntrospectionResult(final Map<Class<?>, BeanCreationStrategy> initial) {
+    BeanIntrospectionResult(final Map<Bean, BeanCreationStrategy> initial) {
         this.strategyMap = initial;
     }
 
@@ -18,17 +17,17 @@ class BeanIntrospectionResult {
         return new BeanIntrospectionResult(new HashMap<>());
     }
 
-    BeanCreationStrategy get(final Class<?> clazz) {
-        return strategyMap.get(clazz);
+    BeanCreationStrategy get(final Bean bean) {
+        return strategyMap.get(bean);
     }
 
-    Map<Class<?>, List<Class<?>>> adjacency() {
+    Map<Bean, List<Bean>> adjacency() {
         return strategyMap.entrySet()
-                .stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Arrays.asList(e.getValue().getParameterTypes())));
+                .stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().dependencies()));
     }
 
     BeanIntrospectionResult merge(final BeanIntrospectionResult second) {
-        final Map<Class<?>, BeanCreationStrategy> copy = new HashMap<>();
+        final Map<Bean, BeanCreationStrategy> copy = new HashMap<>();
         copy.putAll(second.strategyMap);
         copy.putAll(this.strategyMap);
         return new BeanIntrospectionResult(copy);

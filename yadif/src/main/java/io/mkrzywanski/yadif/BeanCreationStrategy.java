@@ -1,10 +1,12 @@
 package io.mkrzywanski.yadif;
 
+import java.util.List;
+
 interface BeanCreationStrategy {
 
-    int getParameterCount();
+    List<Class<?>> getParameterTypes();
 
-    Class<?>[] getParameterTypes();
+    List<Bean> dependencies();
 
     Object invoke(Object[] args);
 }
