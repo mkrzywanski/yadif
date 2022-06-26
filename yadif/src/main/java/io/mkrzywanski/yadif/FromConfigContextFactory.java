@@ -66,8 +66,6 @@ class FromConfigContextFactory {
                 throw new YadifBeanInsantiationException("Not all required dependencies found when creating context");
 
             }
-//            if (!nodes.containsAll(adjacentNodes)) {
-//            }
         }
     }
 

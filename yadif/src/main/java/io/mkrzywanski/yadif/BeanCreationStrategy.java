@@ -7,4 +7,5 @@ interface BeanCreationStrategy {
     List<Bean> dependencies();
 
     Object invoke(Object[] args);
+
 }

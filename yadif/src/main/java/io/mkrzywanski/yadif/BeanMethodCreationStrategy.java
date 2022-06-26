@@ -5,7 +5,7 @@ import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,14 +21,19 @@ class BeanMethodCreationStrategy implements BeanCreationStrategy {
 
     @Override
     public List<Bean> dependencies() {
-        return Arrays.stream(method.getAnnotatedParameterTypes()).map(annotatedType -> {
-            final Qualifier annotation = annotatedType.getAnnotation(Qualifier.class);
-            final BeanId beanId = Optional.ofNullable(annotation)
-                    .map(Qualifier::value)
-                    .map(BeanId::new)
-                    .orElseGet(BeanId::empty);
-            return new Bean((Class<?>) annotatedType.getType(), beanId);
-        }).toList();
+        final var parameterAnnotations = method.getParameterAnnotations();
+        final var parameterTypes = method.getParameterTypes();
+
+        final List<Bean> result = new ArrayList<>(parameterTypes.length);
+        for (int i = 0; i < parameterTypes.length; i++) {
+            final var parameterType = parameterTypes[i];
+            final var annotations = parameterAnnotations[i];
+            final Optional<Qualifier> extract = AnnotationUtils.extractQualifierAnnotation(annotations);
+            final BeanId s = extract.map(Qualifier::value).map(BeanId::new).orElseGet(BeanId::empty);
+            result.add(new Bean(parameterType, s));
+
+        }
+        return result;
     }
 
     @Override
