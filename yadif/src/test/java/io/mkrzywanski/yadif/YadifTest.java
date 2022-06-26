@@ -93,6 +93,17 @@ class YadifTest {
 
     }
 
+    @Test
+    void shouldInstantiateBeansWhenUsingPackageScanAndOneBeanHasMultipleConstructors() {
+        final Context context = Yadif.fromConfig(io.mkrzywanski.yadif.test.packagescan.multipleconstructors.Config.class);
+        final var a = context.getInstance("io.mkrzywanski.yadif.test.packagescan.multipleconstructors.component.A", io.mkrzywanski.yadif.test.packagescan.multipleconstructors.component.A.class);
+        final var b = context.getInstance("io.mkrzywanski.yadif.test.packagescan.multipleconstructors.component.B", io.mkrzywanski.yadif.test.packagescan.multipleconstructors.component.B.class);
+
+        assertThat(a).isPresent();
+        assertThat(b).isPresent();
+
+    }
+
     private CyclePath path(final List<Class<?>> paths) {
         return new CyclePath(paths);
     }
