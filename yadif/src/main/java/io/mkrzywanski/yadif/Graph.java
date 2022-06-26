@@ -1,6 +1,7 @@
 package io.mkrzywanski.yadif;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,10 @@ class Graph {
                 .filter(classListEntry -> classListEntry.getValue().contains(node))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
+    }
+
+    Set<Class<?>> nodes() {
+        return new HashSet<>(adjacencyMap.keySet());
     }
 
     void removeEdge(final Class<?> from, final Class<?> toRemove) {

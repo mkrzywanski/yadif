@@ -19,11 +19,11 @@ import static org.reflections.scanners.Scanners.TypesAnnotated;
 class IntrospectPackageScan implements BeanIntrospectionStrategy {
 
     @Override
-    public BeanIntrospectionStrategies introspect(final Object object) {
+    public BeanIntrospectionResult introspect(final Object object) {
         final PackageScan annotation = object.getClass().getAnnotation(PackageScan.class);
 
         if (annotation == null) {
-            return BeanIntrospectionStrategies.empty();
+            return BeanIntrospectionResult.empty();
         }
 
         final String packageName = annotation.value();
@@ -38,7 +38,7 @@ class IntrospectPackageScan implements BeanIntrospectionStrategy {
         return createBeanCreationStrategies(potentialBeans);
     }
 
-    private BeanIntrospectionStrategies createBeanCreationStrategies(final Set<Class<?>> potentialBeans) {
+    private BeanIntrospectionResult createBeanCreationStrategies(final Set<Class<?>> potentialBeans) {
         final HashMap<Class<?>, BeanCreationStrategy> result = new HashMap<>();
         for (Class<?> clazz : potentialBeans) {
             final Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
@@ -49,7 +49,7 @@ class IntrospectPackageScan implements BeanIntrospectionStrategy {
             result.put(clazz, new ConstructorCreationStrategy(constructor));
         }
 
-        return new BeanIntrospectionStrategies(result);
+        return new BeanIntrospectionResult(result);
     }
 
     private Constructor<?> getAnnotatedConstructor(final Constructor<?>[] declaredConstructors) {
