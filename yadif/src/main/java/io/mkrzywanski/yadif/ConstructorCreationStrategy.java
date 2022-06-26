@@ -18,11 +18,6 @@ class ConstructorCreationStrategy implements BeanCreationStrategy {
         this.constructor.setAccessible(true);
     }
 
-//    @Override
-//    public int getParameterCount() {
-//        return constructor.getParameterCount();
-//    }
-
     @Override
     public List<Class<?>> getParameterTypes() {
         return Arrays.stream(constructor.getParameterTypes()).toList();

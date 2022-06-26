@@ -12,8 +12,4 @@ record Bean(Class<?> type, BeanId id) {
     boolean hasEmptyId() {
         return this.id.isEmpty();
     }
-
-    boolean hasNonEmptyId() {
-        return !this.id.isEmpty();
-    }
 }

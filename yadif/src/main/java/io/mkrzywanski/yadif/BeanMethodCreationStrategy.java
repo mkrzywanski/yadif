@@ -19,11 +19,6 @@ class BeanMethodCreationStrategy implements BeanCreationStrategy {
         this.target = target;
     }
 
-//    @Override
-//    public int getParameterCount() {
-//        return method.getParameterCount();
-//    }
-
     @Override
     public List<Class<?>> getParameterTypes() {
         return Arrays.stream(method.getParameterTypes()).toList();
@@ -34,9 +29,9 @@ class BeanMethodCreationStrategy implements BeanCreationStrategy {
         return Arrays.stream(method.getAnnotatedParameterTypes()).map(annotatedType -> {
             final Qualifier annotation = annotatedType.getAnnotation(Qualifier.class);
             final BeanId beanId = Optional.ofNullable(annotation)
-                    .map(Qualifier::value).map(BeanId::new)
+                    .map(Qualifier::value)
+                    .map(BeanId::new)
                     .orElseGet(BeanId::empty);
-            //
             return new Bean((Class<?>) annotatedType.getType(), beanId);
         }).toList();
     }

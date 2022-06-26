@@ -29,18 +29,11 @@ class Path {
     }
 
     boolean isCycle() {
-//        boolean b = path.stream()
-//                .collect(Collectors.groupingBy(clazz -> clazz, Collectors.counting()))
-//                .entrySet().stream()
-//                .anyMatch(classLongEntry -> classLongEntry.getValue() > 1);
-//        if (b) {
-//            return b;
-//        }
         final Bean first = path.get(0);
         final Bean last = path.get(path.size() - 1);
 
         if (first.hasSameTypeAs(last)) {
-            return !first.hasNonEmptyId() || !last.hasNonEmptyId() || first.hasSameIdAs(last);
+            return first.hasEmptyId() || last.hasEmptyId() || first.hasSameIdAs(last);
         } else {
             return false;
         }
