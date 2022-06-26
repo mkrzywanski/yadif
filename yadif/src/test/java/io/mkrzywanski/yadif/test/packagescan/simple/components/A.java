@@ -1,4 +1,4 @@
-package io.mkrzywanski.yadif.test.packagescan.components;
+package io.mkrzywanski.yadif.test.packagescan.simple.components;
 
 import io.mkrzywanski.yadif.annotation.Component;
 
