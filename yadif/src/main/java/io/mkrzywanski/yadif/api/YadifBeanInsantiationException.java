@@ -1,4 +1,4 @@
-package io.mkrzywanski.yadif;
+package io.mkrzywanski.yadif.api;
 
 public class YadifBeanInsantiationException extends RuntimeException {
     public YadifBeanInsantiationException(final Throwable cause) {

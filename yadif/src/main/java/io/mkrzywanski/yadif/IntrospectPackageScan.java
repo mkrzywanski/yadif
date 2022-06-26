@@ -3,6 +3,7 @@ package io.mkrzywanski.yadif;
 import io.mkrzywanski.yadif.annotation.Component;
 import io.mkrzywanski.yadif.annotation.FactoryConstructor;
 import io.mkrzywanski.yadif.annotation.PackageScan;
+import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
 import io.mkrzywanski.yadif.api.YadifException;
 import org.reflections.Reflections;
 

@@ -1,6 +1,7 @@
 package io.mkrzywanski.yadif;
 
 import io.mkrzywanski.yadif.api.CyclePath;
+import io.mkrzywanski.yadif.api.DependencyCycleDetectedException;
 import io.mkrzywanski.yadif.api.YadifException;
 
 import java.lang.reflect.Constructor;

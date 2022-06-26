@@ -1,6 +1,8 @@
 package io.mkrzywanski.yadif;
 
 import io.mkrzywanski.yadif.api.CyclePath;
+import io.mkrzywanski.yadif.api.DependencyCycleDetectedException;
+import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
 import io.mkrzywanski.yadif.test.A;
 import io.mkrzywanski.yadif.test.B;
 import io.mkrzywanski.yadif.test.C;
@@ -101,6 +103,14 @@ class YadifTest {
 
         assertThat(a).isPresent();
         assertThat(b).isPresent();
+
+    }
+
+    @Test
+    void shouldThrowExceptionWhenBeanHasMultipleAnnotatedConstructors() {
+        final ThrowableAssert.ThrowingCallable code = () -> Yadif.fromConfig(io.mkrzywanski.yadif.test.packagescan.multiple_constructors_annotated.Config.class);
+
+        assertThatCode(code).isExactlyInstanceOf(YadifBeanInsantiationException.class);
 
     }
 

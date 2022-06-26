@@ -1,5 +1,7 @@
 package io.mkrzywanski.yadif;
 
+import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
