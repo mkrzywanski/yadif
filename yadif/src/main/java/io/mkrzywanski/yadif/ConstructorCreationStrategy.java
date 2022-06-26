@@ -19,11 +19,6 @@ class ConstructorCreationStrategy implements BeanCreationStrategy {
     }
 
     @Override
-    public List<Class<?>> getParameterTypes() {
-        return Arrays.stream(constructor.getParameterTypes()).toList();
-    }
-
-    @Override
     public List<Bean> dependencies() {
         return Arrays.stream(constructor.getAnnotatedParameterTypes()).map(annotatedType -> {
             final Qualifier annotation = annotatedType.getAnnotation(Qualifier.class);

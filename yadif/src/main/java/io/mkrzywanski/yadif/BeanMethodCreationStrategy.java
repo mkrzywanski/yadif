@@ -20,11 +20,6 @@ class BeanMethodCreationStrategy implements BeanCreationStrategy {
     }
 
     @Override
-    public List<Class<?>> getParameterTypes() {
-        return Arrays.stream(method.getParameterTypes()).toList();
-    }
-
-    @Override
     public List<Bean> dependencies() {
         return Arrays.stream(method.getAnnotatedParameterTypes()).map(annotatedType -> {
             final Qualifier annotation = annotatedType.getAnnotation(Qualifier.class);
