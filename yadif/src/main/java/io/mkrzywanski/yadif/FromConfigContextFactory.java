@@ -1,25 +1,28 @@
 package io.mkrzywanski.yadif;
 
-import io.mkrzywanski.yadif.annotation.Instance;
 import io.mkrzywanski.yadif.api.CyclePath;
+import io.mkrzywanski.yadif.api.DependencyCycleDetectedException;
 import io.mkrzywanski.yadif.api.YadifException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class FromConfigContextFactory {
 
     private final TopologicalSort<Class<?>> topologicalSort = new KahnTopologicalSort();
     private final DfsGraphCycleDetecting cycleDetecting = new DfsGraphCycleDetecting();
+    private final List<BeanIntrospectionStrategy> strategies;
+
+    FromConfigContextFactory() {
+        this.strategies = Arrays.asList(new IntrospectConfigClass(), new IntrospectPackageScan());
+    }
 
     Context fromConfig(final Class<?> clazz) {
         try {
@@ -33,35 +36,45 @@ class FromConfigContextFactory {
 
     Context fromConfig(final Object object) {
         Objects.requireNonNull(object);
-        final var factoryMethods = getFactoryMethods(object);
+        final BeanIntrospectionStrategies beanCreationStrategies = introspectConfiguration(object);
 
-        final Map<Class<?>, List<Class<?>>> adjacencyMatrix = factoryMethods.stream()
-                .collect(Collectors.toMap(Method::getReturnType, method -> Arrays.asList(method.getParameterTypes())));
-        final Graph graph = new Graph(adjacencyMatrix);
+        final Graph dependencyGraph = new Graph(beanCreationStrategies.adjacency());
 
-        detectCycles(graph);
+        detectCycles(dependencyGraph);
 
-        final var orderedDependencies = topologicalSort.sort(graph);
+        final var orderedDependencies = topologicalSort.sort(dependencyGraph);
 
-        final var beanToFactoryMethod = factoryMethods.stream().collect(Collectors.toMap(Method::getReturnType, Function.identity()));
+        final Map<Class<?>, Object> initializedBeans = initializeBeans(beanCreationStrategies, orderedDependencies);
+
+        return createContext(initializedBeans);
+    }
+
+    private BeanIntrospectionStrategies introspectConfiguration(final Object object) {
+
+        final var introspectionStrategies = strategies.stream()
+                .map(beanIntrospectionStrategy -> beanIntrospectionStrategy.introspect(object))
+                .toList();
+
+        assert !introspectionStrategies.isEmpty();
+
+        return introspectionStrategies.stream()
+                .reduce(BeanIntrospectionStrategies.empty(), BeanIntrospectionStrategies::merge);
+    }
+
+    private Map<Class<?>, Object> initializeBeans(final BeanIntrospectionStrategies strategies, final List<Class<?>> orderedDependencies) {
         final Map<Class<?>, Object> initializedBeans = new HashMap<>();
 
         for (Class<?> beanType : orderedDependencies) {
-            final Method initializingMethod = beanToFactoryMethod.get(beanType);
+            final BeanCreationStrategy initializingMethod = strategies.get(beanType);
             final int parameterCount = initializingMethod.getParameterCount();
             final Object[] args = new Object[parameterCount];
             for (int i = 0; i < parameterCount; i++) {
                 args[i] = initializedBeans.get(initializingMethod.getParameterTypes()[i]);
             }
-            try {
-                final Object constructedBean = initializingMethod.invoke(object, args);
-                initializedBeans.put(beanType, constructedBean);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new YadifException(e);
-            }
+            final Object constructedBean = initializingMethod.invoke(args);
+            initializedBeans.put(beanType, constructedBean);
         }
-
-        return createContext(initializedBeans);
+        return initializedBeans;
     }
 
     private void detectCycles(final Graph graph) {
@@ -73,14 +86,6 @@ class FromConfigContextFactory {
                     .collect(Collectors.toSet());
             throw new DependencyCycleDetectedException(cyclePaths);
         }
-    }
-
-    private List<Method> getFactoryMethods(final Object object) {
-        final var methods = object.getClass()
-                .getMethods();
-        return Arrays.stream(methods)
-                .filter(method -> method.isAnnotationPresent(Instance.class))
-                .toList();
     }
 
     private Context createContext(final Map<Class<?>, Object> initializedBeans) {

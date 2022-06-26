@@ -1,6 +1,4 @@
-package io.mkrzywanski.yadif;
-
-import io.mkrzywanski.yadif.api.CyclePath;
+package io.mkrzywanski.yadif.api;
 
 import java.util.Set;
 

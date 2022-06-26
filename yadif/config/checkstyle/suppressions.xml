@@ -6,4 +6,5 @@
 
 <suppressions>
     <suppress checks="MagicNumber" files=".*[\\/]src[\\/](test|it|contractTest)[\\/]"/>
+    <suppress checks="PackageName" files=".*[\\/]src[\\/](test|it|contractTest)[\\/]"/>
 </suppressions>
