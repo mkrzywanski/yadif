@@ -5,6 +5,10 @@ record Bean(Class<?> type, BeanId id) {
         return this.type == other.type;
     }
 
+    boolean hasType(final Class<?> other) {
+        return this.type == other;
+    }
+
     boolean hasSameIdAs(final Bean other) {
         return this.id.equals(other.id);
     }

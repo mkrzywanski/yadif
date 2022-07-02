@@ -6,7 +6,13 @@ import io.mkrzywanski.yadif.test.packagescan.mixed.A;
 @Component
 public class B {
 
-    public B(final A a) {
+    private final A a;
 
+    public B(final A a) {
+        this.a = a;
+    }
+
+    public A getA() {
+        return a;
     }
 }

@@ -15,7 +15,7 @@ public class ConfigWithDependencies {
 
     @Instance
     public B b(final A a, final C c) {
-        return new B();
+        return new B(a, c);
     }
 }
 

@@ -16,4 +16,8 @@ public class A {
     A(final B b) {
         this.b = b;
     }
+
+    public B getB() {
+        return b;
+    }
 }

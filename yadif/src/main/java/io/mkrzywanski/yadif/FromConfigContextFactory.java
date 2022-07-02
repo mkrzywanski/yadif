@@ -92,7 +92,16 @@ class FromConfigContextFactory {
             final Object[] args = new Object[parameterCount];
             for (int i = 0; i < parameterCount; i++) {
                 final Bean dependency = dependencies.get(i);
-                args[i] = initializedBeans.get(new Bean(dependency.type(), dependency.id()));
+                if (!dependency.id().isEmpty()) {
+                    args[i] = initializedBeans.get(new Bean(dependency.type(), dependency.id()));
+                } else {
+                    args[i] = initializedBeans.entrySet()
+                            .stream()
+                            .filter(beanObjectEntry -> beanObjectEntry.getKey().hasType(dependency.type()))
+                            .map(Map.Entry::getValue)
+                            .findAny()
+                            .orElseThrow(RuntimeException::new);
+                }
             }
             final Object constructedBean = creationStrategy.invoke(args);
             initializedBeans.put(beanType, constructedBean);
