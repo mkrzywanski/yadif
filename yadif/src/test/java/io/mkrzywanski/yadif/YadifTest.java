@@ -41,8 +41,8 @@ class YadifTest {
         assertThat(a).isPresent();
         assertThat(c).isPresent();
         assertThat(b).isPresent().hasValueSatisfying(b1 -> {
-            assertThat(b1.getA() == a.get()).isTrue();
-            assertThat(b1.getC() == c.get()).isTrue();
+            assertThat(b1.getA()).isSameAs(a.get());
+            assertThat(b1.getC()).isSameAs(c.get());
         });
     }
 
@@ -64,9 +64,7 @@ class YadifTest {
         final var b = context.getInstance("io.mkrzywanski.yadif.test.packagescan.mixed.component.B", io.mkrzywanski.yadif.test.packagescan.mixed.component.B.class);
 
         assertThat(a).isPresent();
-        assertThat(b).isPresent().hasValueSatisfying(b1 -> {
-            assertThat(b1.getA() == a.get()).isTrue();
-        });
+        assertThat(b).isPresent().hasValueSatisfying(b1 -> assertThat(b1.getA()).isSameAs(a.get()));
 
     }
 
@@ -77,9 +75,7 @@ class YadifTest {
         final var b = context.getInstance("io.mkrzywanski.yadif.test.packagescan.multipleconstructors.component.B", io.mkrzywanski.yadif.test.packagescan.multipleconstructors.component.B.class);
 
         assertThat(b).isPresent();
-        assertThat(a).isPresent().hasValueSatisfying(a1 -> {
-            assertThat(a1.getB() == b.get()).isTrue();
-        });
+        assertThat(a).isPresent().hasValueSatisfying(a1 -> assertThat(a1.getB()).isSameAs(b.get()));
 
     }
 
