@@ -1,5 +1,6 @@
 package io.mkrzywanski.yadif;
 
+import io.mkrzywanski.yadif.api.BeanWithId;
 import io.mkrzywanski.yadif.api.CyclePath;
 import io.mkrzywanski.yadif.api.DependencyCycleDetectedException;
 import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
@@ -112,7 +113,7 @@ class FromConfigContextFactory {
 
     private Context createContext(final Map<Bean, Object> initializedBeans) {
         final var context = new Context();
-        initializedBeans.forEach((key, value) -> context.add(key.type().getTypeName(), value));
+        initializedBeans.forEach((key, value) -> context.add(key.type().getTypeName(), new BeanWithId(key.id(), value)));
         return context;
     }
 }

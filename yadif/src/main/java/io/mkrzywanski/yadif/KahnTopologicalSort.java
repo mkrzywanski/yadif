@@ -27,7 +27,11 @@ class KahnTopologicalSort implements TopologicalSort<Bean> {
             final var currentNode = nodeQueue.poll();
             result.add(currentNode);
 
-            final var edges = graph.getNodeDependents(currentNode);
+            Set<Bean> edges = graph.getNodeDependentsExact(currentNode);
+            if (edges.isEmpty() && !graph.containsBeanOfSameTypeWhichIsExactDependencyOfOtherNode(currentNode)) {
+                edges = graph.getNodeDependentsByType(currentNode);
+
+            }
 
             for (Bean m : edges) {
                 graph.removeEdge(m, currentNode);

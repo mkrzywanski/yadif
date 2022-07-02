@@ -38,19 +38,30 @@ class Graph {
                 .collect(Collectors.toSet());
     }
 
-    Set<Bean> getNodeDependents(final Bean node) {
-
-
+    Set<Bean> getNodeDependentsExact(final Bean node) {
         return adjacencyMap.entrySet()
                 .stream()
-                .filter(classListEntry -> {
-                    final boolean exactMatch = classListEntry.getValue().contains(node);
-                    if (exactMatch) {
-                        return true;
-                    } else {
-                        return classListEntry.getValue().stream().map(Bean::type).collect(Collectors.toSet()).contains(node.type());
-                    }
-                })
+                .filter(classListEntry -> classListEntry.getValue().contains(node))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+
+    boolean containsBeanOfSameTypeWhichIsExactDependencyOfOtherNode(final Bean node) {
+        final Set<Bean> beansWithSameType = adjacencyMap.keySet()
+                .stream()
+                .filter(node::hasSameTypeAs)
+                .collect(Collectors.toSet());
+
+        beansWithSameType.remove(node);
+
+        return adjacencyMap.entrySet().stream()
+                .anyMatch(e -> e.getValue().stream().anyMatch(beansWithSameType::contains));
+    }
+
+    Set<Bean> getNodeDependentsByType(final Bean node) {
+        return adjacencyMap.entrySet()
+                .stream()
+                .filter(classListEntry -> classListEntry.getValue().stream().map(Bean::type).collect(Collectors.toSet()).contains(node.type()))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
     }

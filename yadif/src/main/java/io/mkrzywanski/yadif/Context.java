@@ -1,5 +1,6 @@
 package io.mkrzywanski.yadif;
 
+import io.mkrzywanski.yadif.api.BeanWithId;
 import io.mkrzywanski.yadif.api.NoUniqueBeanDefinitionException;
 
 import java.util.ArrayList;
@@ -10,33 +11,35 @@ import java.util.Optional;
 
 public class Context {
 
-    private final Map<String, List<Object>> beans;
+    private final Map<String, List<BeanWithId>> beans;
 
     public Context() {
         beans = new HashMap<>();
     }
 
-    void add(final String name, final Object object) {
+    void add(final String name, final BeanWithId object) {
         beans.computeIfAbsent(name, s -> new ArrayList<>()).add(object);
     }
 
     public <T> Optional<T> getInstance(final String fullClassName, final Class<T> clazz) {
-        final List<Object> bean = beans.get(fullClassName);
-        if (bean == null || bean.isEmpty()) {
+        final List<BeanWithId> beansWithIds = this.beans.get(fullClassName);
+        if (beansWithIds == null || beansWithIds.isEmpty()) {
             return Optional.empty();
         }
-        if (bean.size() > 1) {
-            throw new NoUniqueBeanDefinitionException();
+        if (beansWithIds.size() > 1) {
+            throw new NoUniqueBeanDefinitionException("");
         }
-        final Object o = bean.get(0);
-        final T t = clazz.isInstance(o) ? clazz.cast(o) : null;
-        return Optional.ofNullable(t);
+        final BeanWithId beanWithId = beansWithIds.get(0);
+        final Object bean = beanWithId.bean();
+        final T beanInstance = clazz.isInstance( bean) ? clazz.cast( bean) : null;
+        return Optional.ofNullable(beanInstance);
     }
 
     public <T> List<T> getByType(final Class<T> clazz) {
         final String canonicalName = clazz.getCanonicalName();
         return Optional.ofNullable(beans.get(canonicalName))
-                .map(objects -> objects.stream().map(clazz::cast).toList())
+                .map(objects -> objects.stream().map(BeanWithId::bean).map(clazz::cast).toList())
                 .orElseGet(ArrayList::new);
     }
+
 }

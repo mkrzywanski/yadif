@@ -18,6 +18,6 @@ public class Config {
 
     @Instance
     public B b(@Qualifier("a") final A a) {
-        return new B();
+        return new B(a);
     }
 }

@@ -18,7 +18,10 @@ class YadifQualifierTest {
         final var b = context.getInstance("io.mkrzywanski.yadif.test.qualifier.simple.component.B", B.class);
 
         assertThat(a).hasSize(2);
-        assertThat(b).isPresent();
+        assertThat(b).isPresent()
+                .hasValueSatisfying(b1 -> {
+                    assertThat(a).contains(b1.getA());
+                });
     }
 
     @Test
