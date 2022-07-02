@@ -1,5 +1,6 @@
 package io.mkrzywanski.yadif;
 
+import io.mkrzywanski.yadif.api.BeanWithId;
 import io.mkrzywanski.yadif.api.CyclePath;
 import io.mkrzywanski.yadif.api.DependencyCycleDetectedException;
 import io.mkrzywanski.yadif.api.YadifBeanInsantiationException;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 
 class FromConfigContextFactory {
 
-    private final TopologicalSort<Class<?>> topologicalSort = new KahnTopologicalSort();
+    private final TopologicalSort<Bean> topologicalSort = new KahnTopologicalSort();
     private final DfsGraphCycleDetecting cycleDetecting = new DfsGraphCycleDetecting();
     private final List<BeanIntrospectionStrategy> strategies;
 
@@ -28,8 +29,8 @@ class FromConfigContextFactory {
     Context fromConfig(final Class<?> clazz) {
         try {
             final Constructor<?> constructor = clazz.getConstructor();
-            final Object o = constructor.newInstance();
-            return fromConfig(o);
+            final Object configInstance = constructor.newInstance();
+            return fromConfig(configInstance);
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new YadifException(e);
         }
@@ -41,22 +42,30 @@ class FromConfigContextFactory {
 
         final Graph dependencyGraph = new Graph(beanIntrospectionResult.adjacency());
 
-        detectCycles(dependencyGraph);
         ensureAllNodesCanBeCreated(dependencyGraph);
+        detectCycles(dependencyGraph);
 
         final var orderedDependencies = topologicalSort.sort(dependencyGraph);
 
-        final Map<Class<?>, Object> initializedBeans = initializeBeans(beanIntrospectionResult, orderedDependencies);
+        final Map<Bean, Object> initializedBeans = initializeBeans(beanIntrospectionResult, orderedDependencies);
 
         return createContext(initializedBeans);
     }
 
     private void ensureAllNodesCanBeCreated(final Graph dependencyGraph) {
-        final Set<Class<?>> nodes = dependencyGraph.nodes();
-        for (Class<?> node : nodes) {
+        final Set<Bean> nodes = dependencyGraph.nodes();
+        for (Bean node : nodes) {
             final var adjacentNodes = dependencyGraph.getAdjacentNodes(node);
-            if (!nodes.containsAll(adjacentNodes)) {
+            for (Bean b : adjacentNodes) {
+                final boolean hasExactMatch = nodes.contains(b);
+                if (hasExactMatch) {
+                    continue;
+                }
+                if (nodes.stream().map(Bean::type).collect(Collectors.toSet()).contains(b.type())) {
+                    continue;
+                }
                 throw new YadifBeanInsantiationException("Not all required dependencies found when creating context");
+
             }
         }
     }
@@ -73,17 +82,19 @@ class FromConfigContextFactory {
                 .reduce(BeanIntrospectionResult.empty(), BeanIntrospectionResult::merge);
     }
 
-    private Map<Class<?>, Object> initializeBeans(final BeanIntrospectionResult strategies, final List<Class<?>> orderedDependencies) {
-        final Map<Class<?>, Object> initializedBeans = new HashMap<>();
+    private Map<Bean, Object> initializeBeans(final BeanIntrospectionResult strategies, final List<Bean> orderedDependencies) {
+        final Map<Bean, Object> initializedBeans = new HashMap<>();
 
-        for (Class<?> beanType : orderedDependencies) {
-            final BeanCreationStrategy initializingMethod = strategies.get(beanType);
-            final int parameterCount = initializingMethod.getParameterCount();
+        for (Bean beanType : orderedDependencies) {
+            final BeanCreationStrategy creationStrategy = strategies.get(beanType);
+            final var dependencies = creationStrategy.dependencies();
+            final int parameterCount = dependencies.size();
             final Object[] args = new Object[parameterCount];
             for (int i = 0; i < parameterCount; i++) {
-                args[i] = initializedBeans.get(initializingMethod.getParameterTypes()[i]);
+                final Bean dependency = dependencies.get(i);
+                args[i] = initializedBeans.get(new Bean(dependency.type(), dependency.id()));
             }
-            final Object constructedBean = initializingMethod.invoke(args);
+            final Object constructedBean = creationStrategy.invoke(args);
             initializedBeans.put(beanType, constructedBean);
         }
         return initializedBeans;
@@ -94,15 +105,15 @@ class FromConfigContextFactory {
 
         if (!cycles.isEmpty()) {
             final Set<CyclePath> cyclePaths = cycles.stream()
-                    .map(path -> new CyclePath(path.getPath()))
+                    .map(path -> new CyclePath(path.getPath().stream().map(Bean::type).collect(Collectors.toList())))
                     .collect(Collectors.toSet());
             throw new DependencyCycleDetectedException(cyclePaths);
         }
     }
 
-    private Context createContext(final Map<Class<?>, Object> initializedBeans) {
+    private Context createContext(final Map<Bean, Object> initializedBeans) {
         final var context = new Context();
-        initializedBeans.forEach((key, value) -> context.add(key.getTypeName(), value));
+        initializedBeans.forEach((key, value) -> context.add(key.type().getTypeName(), new BeanWithId(key.id(), value)));
         return context;
     }
 }

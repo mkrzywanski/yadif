@@ -15,7 +15,7 @@ class IntrospectConfigClass implements BeanIntrospectionStrategy {
 
         final var strategyMap = factoryMethods
                 .stream()
-                .collect(Collectors.<Method, Class<?>, BeanCreationStrategy>toMap(Method::getReturnType, method -> new BeanMethodCreationStrategy(method, object)));
+                .collect(Collectors.<Method, Bean, BeanCreationStrategy>toMap(method -> new Bean(method.getReturnType(), new BeanId(method.getName())), method -> new BeanMethodCreationStrategy(method, object)));
 
         return new BeanIntrospectionResult(strategyMap);
     }
