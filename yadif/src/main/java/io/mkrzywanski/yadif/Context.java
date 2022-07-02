@@ -1,6 +1,7 @@
 package io.mkrzywanski.yadif;
 
 import io.mkrzywanski.yadif.api.BeanWithId;
+import io.mkrzywanski.yadif.api.NoSuchBeanException;
 import io.mkrzywanski.yadif.api.NoUniqueBeanDefinitionException;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class Context {
         beans.computeIfAbsent(name, s -> new ArrayList<>()).add(object);
     }
 
-    public <T> Optional<T> getInstance(final String fullClassName, final Class<T> clazz) {
+    public <T> Optional<T> getInstanceOptional(final String fullClassName, final Class<T> clazz) {
         final List<BeanWithId> beansWithIds = this.beans.get(fullClassName);
         if (beansWithIds == null || beansWithIds.isEmpty()) {
             return Optional.empty();
@@ -33,6 +34,11 @@ public class Context {
         final Object bean = beanWithId.bean();
         final T beanInstance = clazz.isInstance( bean) ? clazz.cast( bean) : null;
         return Optional.ofNullable(beanInstance);
+    }
+
+    public <T> T getInstance(final String fullClassName, final Class<T> clazz) {
+        return getInstanceOptional(fullClassName, clazz)
+                .orElseThrow(() -> new NoSuchBeanException("No instance of bean found"));
     }
 
     public <T> List<T> getByType(final Class<T> clazz) {
