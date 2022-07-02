@@ -1,4 +1,4 @@
-package io.mkrzywanski.yadif.test;
+package io.mkrzywanski.yadif.test.cycle.case1;
 
 import io.mkrzywanski.yadif.annotation.Instance;
 
@@ -10,6 +10,6 @@ public class CycleConfig1 {
 
     @Instance
     public B b(final A a) {
-        return new B();
+        return new B(a);
     }
 }
