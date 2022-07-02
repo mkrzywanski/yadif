@@ -56,12 +56,12 @@ class FromConfigContextFactory {
         final Set<Bean> nodes = dependencyGraph.nodes();
         for (Bean node : nodes) {
             final var adjacentNodes = dependencyGraph.getAdjacentNodes(node);
-            for (Bean b : adjacentNodes) {
-                final boolean hasExactMatch = nodes.contains(b);
+            for (Bean bean : adjacentNodes) {
+                final boolean hasExactMatch = nodes.contains(bean);
                 if (hasExactMatch) {
                     continue;
                 }
-                if (nodes.stream().map(Bean::type).collect(Collectors.toSet()).contains(b.type())) {
+                if (nodes.stream().map(Bean::type).collect(Collectors.toSet()).contains(bean.type())) {
                     continue;
                 }
                 throw new YadifBeanInsantiationException("Not all required dependencies found when creating context");

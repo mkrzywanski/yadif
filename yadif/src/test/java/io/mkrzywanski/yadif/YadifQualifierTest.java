@@ -15,7 +15,7 @@ class YadifQualifierTest {
     void shouldCreateBeansWhenUsingQualifier() {
         final Context context = Yadif.fromConfig(Config.class);
         final var a = context.getByType(A.class);
-        final var b = context.getInstance("io.mkrzywanski.yadif.test.qualifier.simple.component.B", B.class);
+        final var b = context.getInstanceOptional("io.mkrzywanski.yadif.test.qualifier.simple.component.B", B.class);
 
         assertThat(a).hasSize(2);
         assertThat(b).isPresent()
@@ -27,7 +27,7 @@ class YadifQualifierTest {
     @Test
     void shouldThrowExceptionWhenTryingToGetSingleBeanButMoreOfThisTypeExist() {
         final Context context = Yadif.fromConfig(Config.class);
-        final ThrowableAssert.ThrowingCallable code = () -> context.getInstance("io.mkrzywanski.yadif.test.qualifier.simple.component.A", A.class);
+        final ThrowableAssert.ThrowingCallable code = () -> context.getInstanceOptional("io.mkrzywanski.yadif.test.qualifier.simple.component.A", A.class);
         assertThatCode(code).isExactlyInstanceOf(NoUniqueBeanDefinitionException.class);
     }
 }
