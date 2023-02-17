@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'checkstyle'
     id 'jacoco'
-    id "org.sonarqube" version "3.4.0.2513"
+    id "org.sonarqube" version "4.0.0.2929"
 }
 
 group 'org.example'
